@@ -203,7 +203,7 @@
         function render() {
             const mems = getMemories();
             if (!mems.length) {
-                container.innerHTML = `<div style="text-align:center; padding:60px 20px; color:#b85763;">✨ no memories yet.<br>add your first one together.</div>`;
+                container.innerHTML = `<div style="text-align:center; padding:60px 20px; color:#b85763;">✨ no memories yet.<br>shall we make one together.</div>`;
                 return;
             }
             let html = '<div style="display:flex; flex-direction:column; gap:16px;">';
