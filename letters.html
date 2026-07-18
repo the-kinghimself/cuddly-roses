@@ -523,8 +523,11 @@
 
       if (data.ok) {
         specialDots.forEach(d => d.classList.add('ok'));
-        // Store letter in sessionStorage then navigate
-        sessionStorage.setItem('specialLetter', JSON.stringify({ title: data.title, message: data.message }));
+        // Store the letter content locally in sessionStorage and navigate.
+        sessionStorage.setItem('specialLetter', JSON.stringify({
+          title: 'happy anniversary, my love 💝',
+          message: 'my love,\n\nHappy anniversary to the person who has made my heart feel so full, so safe, and so endlessly happy.\n\nEvery day with you feels like a blessing, and every memory we have made together is one I hold close to my heart.\n\nThank you for your love, your patience, your laughter, and the warmth you bring into every moment of my life. You are my favorite person, my comfort, and my home.\n\nI am so grateful for you, for us, and for all the beautiful days still ahead. I love you more than words can say.\n\nHappy anniversary, my heart. 🤍'
+        }));
         setTimeout(() => { window.location.href = 'special.html'; }, 500);
       } else {
         specialDots.forEach(d => d.classList.add('error'));
