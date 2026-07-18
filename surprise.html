@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>memory game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="pageSurprise" class="page active">
+    <div class="nav-row">
+      <a class="back-btn" href="index.html">←</a>
+      <h2 style="margin:0;">memory game</h2>
+      <span class="hub-icon">🗺️</span>
+    </div>
+    <div class="game-area">
+      <div id="gameStart">
+        <div style="font-size:2.5rem; margin:20px 0;">🗺️</div>
+        <p style="font-size:1.2rem; color:#b3434f;">ready for a tiny adventure?</p>
+        <p style="color:#ac7b81; margin:10px 0 20px;">answer questions about us and unlock memories</p>
+        <button class="reveal-btn" id="startGameBtn">let's go →</button>
+      </div>
+      <div id="gamePlay" class="hidden">
+        <div id="questionBox" style="font-size:1.5rem; font-weight:600; color:#b13e4b; margin:20px 0 10px;"></div>
+        <div class="options-box" id="optionsBox"></div>
+        <div id="gameProgress" style="color:#b85763; margin-top:10px;">question 1 of 4</div>
+      </div>
+      <div id="gameEnd" class="hidden">
+        <div style="font-size:3.5rem;">🎉</div>
+        <h2 style="margin:10px 0;">you did it!</h2>
+        <p style="color:#b85763;">our story keeps growing, and I can't wait for every next chapter with you.</p>
+        <a class="reveal-btn" href="surprise.html" style="display:block; text-align:center; text-decoration:none;">play again</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="messageOverlay" class="message-overlay">
+    <div class="message-card">
+      <button class="close-message-btn" id="closeMessageBtn">×</button>
+      <div class="message-emoji" id="messageEmoji">💌</div>
+      <div class="message-text" id="messageContent"></div>
+      <div class="message-hint" id="messageHint"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

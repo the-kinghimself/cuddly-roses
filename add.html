@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>add a memory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="pageAdd" class="page active">
+    <div class="nav-row">
+      <a class="back-btn" href="index.html">←</a>
+      <h2 style="margin:0;">add a memory</h2>
+      <span class="hub-icon">＋</span>
+    </div>
+    <div style="margin-top:10px;">
+      <div class="form-group">
+        <label class="form-label">title</label>
+        <input class="form-input" id="memTitle" placeholder="what do you want to call this memory?" maxlength="60" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">date</label>
+        <input class="form-input" id="memDate" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">category</label>
+        <select class="form-select" id="memTag">
+          <option value="date night">🌙 date night</option>
+          <option value="adventure">🗺️ adventure</option>
+          <option value="everyday">☀️ everyday moment</option>
+          <option value="milestone">🎉 milestone</option>
+          <option value="silly">😄 silly memory</option>
+          <option value="first">✨ a first</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">what happened?</label>
+        <textarea class="form-textarea" id="memNote" placeholder="describe the moment…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">photo (optional)</label>
+        <input type="file" id="memImage" accept="image/*" class="form-input" style="padding:8px;" />
+        <div id="imagePreview" style="margin-top:8px; display:none;">
+          <img id="previewImg" style="max-width:100%; max-height:150px; border-radius:12px; border:2px solid var(--border);" />
+        </div>
+      </div>
+      <button class="reveal-btn" id="saveMemoryBtn" style="margin-top:0;">save this memory 🤍</button>
+    </div>
+  </div>
+
+  <div class="added-toast" id="toast">memory saved 🤍</div>
+
+  <script src="script.js"></script>
+</body>
+</html>

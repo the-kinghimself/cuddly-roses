@@ -51,153 +51,35 @@
   <h2>our little world</h2>
   <div class="subtitle">every moment with you is a treasure</div>
 
-  <!-- photo strip — filled randomly by script.js -->
   <div class="photo-strip" id="photoStrip"></div>
 
   <div class="hub-cards">
-    <div class="hub-card" data-page="reasons">
+    <a class="hub-card" href="reasons.html">
       <span class="card-icon">🥰</span>
       <div class="card-text"><h3>14 reasons</h3><p>why you're everything</p></div>
-    </div>
-    <div class="hub-card" data-page="surprise">
+    </a>
+    <a class="hub-card" href="surprise.html">
       <span class="card-icon">🗺️</span>
       <div class="card-text"><h3>memory game</h3><p>our little adventure</p></div>
-    </div>
-    <div class="hub-card" data-page="letters">
+    </a>
+    <a class="hub-card" href="letters.html">
       <span class="card-icon">💌</span>
       <div class="card-text"><h3>open when…</h3><p>5 letters for you</p></div>
-    </div>
-    <div class="hub-card" data-page="gallery">
+    </a>
+    <a class="hub-card" href="gallery.html">
       <span class="card-icon">📸</span>
       <div class="card-text"><h3>gallery</h3><p>your smile</p></div>
-    </div>
-    <div class="hub-card" data-page="vault">
+    </a>
+    <a class="hub-card" href="vault.html">
       <span class="card-icon">✨</span>
       <div class="card-text"><h3>memory vault</h3><p>our story, moment by moment</p></div>
-    </div>
-    <div class="hub-card" data-page="add">
+    </a>
+    <a class="hub-card" href="add.html">
       <span class="card-icon">＋</span>
       <div class="card-text"><h3>add a memory</h3><p>capture a new moment</p></div>
-    </div>
+    </a>
   </div>
 </div>
-
-<!-- ====== 14 REASONS ====== -->
-<div id="pageReasons" class="page">
-  <div class="nav-row">
-    <button class="back-btn" data-back>←</button>
-    <h2 style="margin:0;">14 reasons</h2>
-  </div>
-  <div class="reasons-grid" id="reasonsGrid"></div>
-  <div class="counter" id="reasonCounter">1 / 14 revealed</div>
-  <button class="reveal-btn" id="revealOneMore">reveal one more ✨</button>
-  <button class="reveal-btn hidden" id="revealAllBtn" style="background:#b13e4b; margin-top:8px;">reveal all 💖</button>
-</div>
-
-<!-- ====== SURPRISE GAME ====== -->
-<div id="pageSurprise" class="page">
-  <div class="nav-row">
-    <button class="back-btn" data-back>←</button>
-    <h2 style="margin:0;">memory game</h2>
-  </div>
-  <div class="game-area">
-    <div id="gameStart">
-      <div style="font-size:2.5rem; margin:20px 0;">🗺️</div>
-      <p style="font-size:1.2rem; color:#b3434f;">ready for a tiny adventure?</p>
-      <p style="color:#ac7b81; margin:10px 0 20px;">answer questions about us and unlock memories</p>
-      <button class="reveal-btn" id="startGameBtn">let's go →</button>
-    </div>
-    <div id="gamePlay" class="hidden">
-      <div id="questionBox" style="font-size:1.5rem; font-weight:600; color:#b13e4b; margin:20px 0 10px;"></div>
-      <div class="options-box" id="optionsBox"></div>
-      <div id="gameProgress" style="color:#b85763; margin-top:10px;">question 1 of 4</div>
-    </div>
-    <div id="gameEnd" class="hidden">
-      <div style="font-size:3.5rem;">🎉</div>
-      <h2 style="margin:10px 0;">you did it!</h2>
-      <p style="color:#b85763;">our story keeps growing, and I can't wait for every next chapter with you.</p>
-      <button class="reveal-btn" onclick="location.reload()">play again</button>
-    </div>
-  </div>
-</div>
-
-<!-- ====== GALLERY ====== -->
-<div id="pageGallery" class="page">
-  <div class="nav-row">
-    <button class="back-btn" data-back>←</button>
-    <h2 style="margin:0;">your smile</h2>
-  </div>
-  <div class="gallery-grid" id="galleryGrid"></div>
-</div>
-
-<!-- ====== MEMORY VAULT ====== -->
-<div id="pageVault" class="page">
-  <div class="nav-row">
-    <button class="back-btn" data-back>←</button>
-    <h2 style="margin:0;">memory vault</h2>
-  </div>
-  <div id="vaultContent"></div>
-</div>
-
-<!-- ====== ADD MEMORY ====== -->
-<div id="pageAdd" class="page">
-  <div class="nav-row">
-    <button class="back-btn" data-back>←</button>
-    <h2 style="margin:0;">add a memory</h2>
-  </div>
-  <div style="margin-top:10px;">
-    <div class="form-group">
-      <label class="form-label">title</label>
-      <input class="form-input" id="memTitle" placeholder="what do you want to call this memory?" maxlength="60" />
-    </div>
-    <div class="form-group">
-      <label class="form-label">date</label>
-      <input class="form-input" id="memDate" type="date" />
-    </div>
-    <div class="form-group">
-      <label class="form-label">category</label>
-      <select class="form-select" id="memTag">
-        <option value="date night">🌙 date night</option>
-        <option value="adventure">🗺️ adventure</option>
-        <option value="everyday">☀️ everyday moment</option>
-        <option value="milestone">🎉 milestone</option>
-        <option value="silly">😄 silly memory</option>
-        <option value="first">✨ a first</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">what happened?</label>
-      <textarea class="form-textarea" id="memNote" placeholder="describe the moment…"></textarea>
-    </div>
-    <div class="form-group">
-      <label class="form-label">photo (optional)</label>
-      <input type="file" id="memImage" accept="image/*" class="form-input" style="padding:8px;" />
-      <div id="imagePreview" style="margin-top:8px; display:none;">
-        <img id="previewImg" style="max-width:100%; max-height:150px; border-radius:12px; border:2px solid var(--border);" />
-      </div>
-    </div>
-    <button class="reveal-btn" id="saveMemoryBtn" style="margin-top:0;">save this memory 🤍</button>
-  </div>
-</div>
-
-<!-- ====== GAME MESSAGE OVERLAY ====== -->
-<div id="messageOverlay" class="message-overlay">
-  <div class="message-card">
-    <button class="close-message-btn" id="closeMessageBtn">×</button>
-    <div class="message-emoji" id="messageEmoji">💌</div>
-    <div class="message-text" id="messageContent"></div>
-    <div class="message-hint" id="messageHint"></div>
-  </div>
-</div>
-
-<!-- ====== LIGHTBOX ====== -->
-<div id="lightbox" class="lightbox hidden" onclick="closeLightbox()">
-  <img id="expandedImg" src="" alt="expanded" />
-  <div id="caption" style="color:white; margin-top:16px; font-size:1.4rem;"></div>
-</div>
-
-<!-- ====== TOAST ====== -->
-<div class="added-toast" id="toast">memory saved 🤍</div>
 
 <script src="script.js"></script>
 </body>

@@ -1,105 +1,68 @@
 (function() {
-    let enteredPin = '';
-    let checking = false;
     const lockScreen = document.getElementById('lockScreen');
     const lockContainer = document.querySelector('.lock-container');
     const pinDotEls = document.querySelectorAll('#pinDots .pin-dot');
 
-    function updatePinDots() {
-        pinDotEls.forEach((dot, i) => {
-            dot.classList.toggle('filled', i < enteredPin.length);
-            dot.classList.remove('error', 'success');
-        });
-    }
+    let enteredPin = '';
+    let checking = false;
 
-    async function checkPin() {
-        if (enteredPin.length < 6 || checking) return;
-        checking = true;
-        let ok = false;
-        try {
-            const res = await fetch('/.netlify/functions/check-pin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pin: enteredPin })
+    if (lockScreen && pinDotEls.length) {
+        function updatePinDots() {
+            pinDotEls.forEach((dot, i) => {
+                dot.classList.toggle('filled', i < enteredPin.length);
+                dot.classList.remove('error', 'success');
             });
-            const data = await res.json();
-            ok = !!data.ok;
-        } catch (e) {
-            // Network/server issue — treat as incorrect, don't unlock.
-            ok = false;
         }
 
-        if (ok) {
-            pinDotEls.forEach(d => d.classList.add('success'));
-            setTimeout(() => lockScreen.classList.add('hidden'), 450);
-        } else {
-            pinDotEls.forEach(d => d.classList.add('error'));
-            lockContainer.classList.add('pin-shake');
-            setTimeout(() => {
-                lockContainer.classList.remove('pin-shake');
-                enteredPin = '';
+        async function checkPin() {
+            if (enteredPin.length < 6 || checking) return;
+            checking = true;
+            let ok = false;
+            try {
+                const res = await fetch('/.netlify/functions/check-pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin: enteredPin })
+                });
+                const data = await res.json();
+                ok = !!data.ok;
+            } catch (e) {
+                ok = false;
+            }
+
+            if (ok) {
+                pinDotEls.forEach(d => d.classList.add('success'));
+                setTimeout(() => lockScreen.classList.add('hidden'), 450);
+            } else {
+                pinDotEls.forEach(d => d.classList.add('error'));
+                lockContainer.classList.add('pin-shake');
+                setTimeout(() => {
+                    lockContainer.classList.remove('pin-shake');
+                    enteredPin = '';
+                    updatePinDots();
+                    checking = false;
+                }, 500);
+            }
+        }
+
+        document.querySelectorAll('#keypad .key[data-k]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const k = btn.dataset.k;
+                if (k === '' || enteredPin.length >= 6) return;
+                enteredPin += k;
                 updatePinDots();
-                checking = false;
-            }, 500);
+                checkPin();
+            });
+        });
+
+        const delKey = document.getElementById('delKey');
+        if (delKey) {
+            delKey.addEventListener('click', () => {
+                enteredPin = enteredPin.slice(0, -1);
+                updatePinDots();
+            });
         }
     }
-
-    document.querySelectorAll('#keypad .key[data-k]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const k = btn.dataset.k;
-            if (k === '' || enteredPin.length >= 6) return;
-            enteredPin += k;
-            updatePinDots();
-            checkPin();
-        });
-    });
-
-    const delKey = document.getElementById('delKey');
-    if (delKey) {
-        delKey.addEventListener('click', () => {
-            enteredPin = enteredPin.slice(0, -1);
-            updatePinDots();
-        });
-    }
-
-    // ----- navigation state -----
-    const pages = {
-        hub: document.getElementById('pageHub'),
-        reasons: document.getElementById('pageReasons'),
-        surprise: document.getElementById('pageSurprise'),
-        gallery: document.getElementById('pageGallery'),
-        vault: document.getElementById('pageVault'),
-        add: document.getElementById('pageAdd')
-    };
-
-    showPage('hub');
-
-    function showPage(pageId) {
-        Object.values(pages).forEach(p => p.classList.remove('active'));
-        pages[pageId].classList.add('active');
-        if (pageId === 'vault') renderVault();
-    }
-
-    // back handlers (go to hub)
-    document.querySelectorAll('.back-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            if (e.target.closest('[data-back]') || e.target.classList.contains('back-btn')) {
-                showPage('hub');
-            }
-        });
-    });
-
-    // ----- hub cards open respective page (letters opens its own standalone file) -----
-    document.querySelectorAll('.hub-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-            const page = card.dataset.page;
-            if (page === 'letters') {
-                window.location.href = 'letters.html';
-                return;
-            }
-            if (page) showPage(page);
-        });
-    });
 
     // ----- 14 reasons -----
     const reasonsList = [
@@ -125,35 +88,37 @@
     const revealBtn = document.getElementById('revealOneMore');
     const revealAllBtn = document.getElementById('revealAllBtn');
 
-    function renderReasons() {
-        reasonsGrid.innerHTML = '';
-        for (let i = 0; i < revealedIdx; i++) {
-            const div = document.createElement('div');
-            div.className = 'reason-card';
-            div.innerText = reasonsList[i];
-            reasonsGrid.appendChild(div);
+    if (reasonsGrid) {
+        function renderReasons() {
+            reasonsGrid.innerHTML = '';
+            for (let i = 0; i < revealedIdx; i++) {
+                const div = document.createElement('div');
+                div.className = 'reason-card';
+                div.innerText = reasonsList[i];
+                reasonsGrid.appendChild(div);
+            }
+            counterSpan.innerText = `${revealedIdx} / 14 revealed`;
+            if (revealedIdx >= 7) revealAllBtn.classList.remove('hidden');
+            if (revealedIdx >= 14) revealBtn.disabled = true;
         }
-        counterSpan.innerText = `${revealedIdx} / 14 revealed`;
-        if (revealedIdx >= 7) revealAllBtn.classList.remove('hidden');
-        if (revealedIdx >= 14) revealBtn.disabled = true;
-    }
-    revealBtn.addEventListener('click', () => {
-        if (revealedIdx < 14) {
-            revealedIdx++;
+        revealBtn.addEventListener('click', () => {
+            if (revealedIdx < 14) {
+                revealedIdx++;
+                renderReasons();
+            }
+            if (revealedIdx === 14) {
+                revealBtn.innerText = 'all revealed 💕';
+                revealBtn.style.opacity = '0.6';
+            }
+        });
+        revealAllBtn.addEventListener('click', () => {
+            revealedIdx = 14;
             renderReasons();
-        }
-        if (revealedIdx === 14) {
             revealBtn.innerText = 'all revealed 💕';
-            revealBtn.style.opacity = '0.6';
-        }
-    });
-    revealAllBtn.addEventListener('click', () => {
-        revealedIdx = 14;
+        });
+        revealedIdx = 1;
         renderReasons();
-        revealBtn.innerText = 'all revealed 💕';
-    });
-    revealedIdx = 1;
-    renderReasons();
+    }
 
     // ----- surprise game (with message overlay) -----
     const questions = [
@@ -177,68 +142,70 @@
     const msgHint = document.getElementById('messageHint');
     const closeMsgBtn = document.getElementById('closeMessageBtn');
 
-    let pendingNextQuestion = false;
-    function showMessageOverlay(text, isCorrect, opts = {}) {
-        msgEmoji.innerText = opts.emoji ?? (isCorrect ? '✨' : '💭');
-        msgContent.innerHTML = text;
-        msgHint.innerText = (typeof opts.hint !== 'undefined') ? opts.hint : (isCorrect ? '· correct ·' : '');
-        pendingNextQuestion = !!opts.nextOnClose;
-        overlay.classList.add('active');
-    }
+    if (startDiv && playDiv && endDiv) {
+        let pendingNextQuestion = false;
+        function showMessageOverlay(text, isCorrect, opts = {}) {
+            msgEmoji.innerText = opts.emoji ?? (isCorrect ? '✨' : '💭');
+            msgContent.innerHTML = text;
+            msgHint.innerText = (typeof opts.hint !== 'undefined') ? opts.hint : (isCorrect ? '· correct ·' : '');
+            pendingNextQuestion = !!opts.nextOnClose;
+            overlay.classList.add('active');
+        }
 
-    function closeOverlay() {
-        overlay.classList.remove('active');
-        if (pendingNextQuestion) {
-            pendingNextQuestion = false;
-            qIndex++;
+        function closeOverlay() {
+            overlay.classList.remove('active');
+            if (pendingNextQuestion) {
+                pendingNextQuestion = false;
+                qIndex++;
+                showQuestion();
+            }
+        }
+        closeMsgBtn.addEventListener('click', closeOverlay);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeOverlay();
+        });
+
+        document.getElementById('startGameBtn').addEventListener('click', () => {
+            startDiv.classList.add('hidden');
+            playDiv.classList.remove('hidden');
+            qIndex = 0;
             showQuestion();
-        }
-    }
-    closeMsgBtn.addEventListener('click', closeOverlay);
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeOverlay();
-    });
-
-    document.getElementById('startGameBtn').addEventListener('click', () => {
-        startDiv.classList.add('hidden');
-        playDiv.classList.remove('hidden');
-        qIndex = 0;
-        showQuestion();
-    });
-
-    function showQuestion() {
-        if (qIndex >= questions.length) {
-            playDiv.classList.add('hidden');
-            endDiv.classList.remove('hidden');
-            return;
-        }
-        const q = questions[qIndex];
-        questionBox.innerText = q.question;
-        let optsHtml = '';
-        q.options.forEach((opt, i) => {
-            optsHtml += `<button class="option-btn" data-opt-index="${i}">${opt}</button>`;
         });
-        optionsBox.innerHTML = optsHtml;
-        progress.innerText = `question ${qIndex+1} of ${questions.length}`;
-        
-        document.querySelectorAll('.option-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const selected = parseInt(e.target.dataset.optIndex);
-                const currentQ = questions[qIndex];
-                
-                document.querySelectorAll('.option-btn').forEach(b => {
-                    b.classList.remove('correct-guess', 'wrong-guess');
-                });
-                
-                if (selected === currentQ.correct) {
-                    e.target.classList.add('correct-guess');
-                    showMessageOverlay(currentQ.memory, true, { nextOnClose: true });
-                } else {
-                    e.target.classList.add('wrong-guess');
-                    showMessageOverlay('try again', false);
-                }
+
+        function showQuestion() {
+            if (qIndex >= questions.length) {
+                playDiv.classList.add('hidden');
+                endDiv.classList.remove('hidden');
+                return;
+            }
+            const q = questions[qIndex];
+            questionBox.innerText = q.question;
+            let optsHtml = '';
+            q.options.forEach((opt, i) => {
+                optsHtml += `<button class="option-btn" data-opt-index="${i}">${opt}</button>`;
             });
-        });
+            optionsBox.innerHTML = optsHtml;
+            progress.innerText = `question ${qIndex+1} of ${questions.length}`;
+            
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const selected = parseInt(e.target.dataset.optIndex);
+                    const currentQ = questions[qIndex];
+                    
+                    document.querySelectorAll('.option-btn').forEach(b => {
+                        b.classList.remove('correct-guess', 'wrong-guess');
+                    });
+                    
+                    if (selected === currentQ.correct) {
+                        e.target.classList.add('correct-guess');
+                        showMessageOverlay(currentQ.memory, true, { nextOnClose: true });
+                    } else {
+                        e.target.classList.add('wrong-guess');
+                        showMessageOverlay('try again', false);
+                    }
+                });
+            });
+        }
     }
 
     // ----- OPEN WHEN LETTERS now lives in letters.html -----
@@ -294,17 +261,19 @@
     }
 
     // Randomize order on every page load — show all images
-    shuffle(allGalleryImages).forEach((item) => {
-        const src = `images/${item.file}`;
-        const div = document.createElement('div');
-        div.className = 'gallery-item';
-        div.innerHTML = `
-            <div class="photo-caption">${item.caption}</div>
-            <img src="${src}" alt="memory" loading="lazy">
-        `;
-        div.addEventListener('click', () => expandImage(src, item.caption));
-        galleryGrid.appendChild(div);
-    });
+    if (galleryGrid) {
+        shuffle(allGalleryImages).forEach((item) => {
+            const src = `images/${item.file}`;
+            const div = document.createElement('div');
+            div.className = 'gallery-item';
+            div.innerHTML = `
+                <div class="photo-caption">${item.caption}</div>
+                <img src="${src}" alt="memory" loading="lazy">
+            `;
+            div.addEventListener('click', () => expandImage(src, item.caption));
+            galleryGrid.appendChild(div);
+        });
+    }
 
     window.expandImage = function(src, caption) {
         document.getElementById('expandedImg').src = src;
@@ -377,68 +346,68 @@
     const previewImg = document.getElementById('previewImg');
     let imageDataURL = null;
 
-    memImageInput.addEventListener('change', function(e) {
-        const file = this.files[0];
-        if (!file) {
+    if (memImageInput && imagePreview && previewImg) {
+        memImageInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) {
+                imagePreview.style.display = 'none';
+                imageDataURL = null;
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX = 400;
+                    let width = img.width, height = img.height;
+                    if (width > height) {
+                        if (width > MAX) { height = height * (MAX / width); width = MAX; }
+                    } else {
+                        if (height > MAX) { width = width * (MAX / height); height = MAX; }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    imageDataURL = dataUrl;
+                    previewImg.src = dataUrl;
+                    imagePreview.style.display = 'block';
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('saveMemoryBtn').addEventListener('click', function() {
+            const title = document.getElementById('memTitle').value.trim();
+            const date = document.getElementById('memDate').value;
+            const note = document.getElementById('memNote').value.trim();
+            const tag = document.getElementById('memTag').value;
+            if (!title) { document.getElementById('memTitle').focus(); return; }
+            const mems = getMemories();
+            mems.unshift({
+                title,
+                date,
+                note,
+                tag,
+                image: imageDataURL || null,
+                id: Date.now()
+            });
+            localStorage.setItem('memories', JSON.stringify(mems));
+            document.getElementById('memTitle').value = '';
+            document.getElementById('memDate').value = '';
+            document.getElementById('memNote').value = '';
+            memImageInput.value = '';
             imagePreview.style.display = 'none';
             imageDataURL = null;
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const MAX = 400;
-                let width = img.width, height = img.height;
-                if (width > height) {
-                    if (width > MAX) { height = height * (MAX / width); width = MAX; }
-                } else {
-                    if (height > MAX) { width = width * (MAX / height); height = MAX; }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                imageDataURL = dataUrl;
-                previewImg.src = dataUrl;
-                imagePreview.style.display = 'block';
-            };
-            img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-
-    document.getElementById('saveMemoryBtn').addEventListener('click', function() {
-        const title = document.getElementById('memTitle').value.trim();
-        const date = document.getElementById('memDate').value;
-        const note = document.getElementById('memNote').value.trim();
-        const tag = document.getElementById('memTag').value;
-        if (!title) { document.getElementById('memTitle').focus(); return; }
-        const mems = getMemories();
-        mems.unshift({
-            title,
-            date,
-            note,
-            tag,
-            image: imageDataURL || null,
-            id: Date.now()
+            const t = document.getElementById('toast');
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+            if (document.getElementById('pageVault')) renderVault();
         });
-        localStorage.setItem('memories', JSON.stringify(mems));
-        // reset form
-        document.getElementById('memTitle').value = '';
-        document.getElementById('memDate').value = '';
-        document.getElementById('memNote').value = '';
-        memImageInput.value = '';
-        imagePreview.style.display = 'none';
-        imageDataURL = null;
-        // toast
-        const t = document.getElementById('toast');
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2200);
-        if (pages.vault.classList.contains('active')) renderVault();
-    });
+    }
 
     // ----- floating hearts -----
     function addFloater() {
