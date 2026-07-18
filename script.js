@@ -72,6 +72,8 @@
         add: document.getElementById('pageAdd')
     };
 
+    showPage('hub');
+
     function showPage(pageId) {
         Object.values(pages).forEach(p => p.classList.remove('active'));
         pages[pageId].classList.add('active');
