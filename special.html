@@ -6,124 +6,28 @@
   <title>for you 💝</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      min-height: 100vh;
-      background: linear-gradient(160deg, #1a0a0e 0%, #2d1218 50%, #1a0a0e 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      font-family: 'DM Sans', sans-serif;
-      overflow-x: hidden;
-    }
-
-    /* floating hearts */
-    .heart-bg {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: 0;
-    }
-    .heart-bg span {
-      position: absolute;
-      bottom: -30px;
-      font-size: 1.2rem;
-      opacity: 0;
-      animation: floatUp linear infinite;
-    }
-    @keyframes floatUp {
-      0%   { transform: translateY(0) rotate(0deg); opacity: 0.6; }
-      100% { transform: translateY(-110vh) rotate(20deg); opacity: 0; }
-    }
-
-    .card {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 420px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,140,160,0.2);
-      border-radius: 40px;
-      overflow: hidden;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-      animation: riseIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
-    }
-    @keyframes riseIn {
-      0%   { opacity: 0; transform: translateY(30px) scale(0.96); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .card-header {
-      background: linear-gradient(135deg, rgba(201,72,91,0.25), rgba(120,20,40,0.4));
-      padding: 36px 28px 28px;
-      text-align: center;
-      border-bottom: 1px solid rgba(255,140,160,0.15);
-    }
-    .header-icon {
-      font-size: 3.5rem;
-      margin-bottom: 14px;
-      display: block;
-      animation: pulse 2.5s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-    .header-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      font-style: italic;
-      color: #f7dde0;
-      line-height: 1.3;
-    }
-
-    .card-body {
-      padding: 28px;
-      color: rgba(247,221,224,0.82);
-      font-size: 1.05rem;
-      line-height: 1.9;
-    }
-    .card-body p { margin-bottom: 16px; }
-    .card-body p:last-child { margin-bottom: 0; }
-    .card-body em { color: #ffb3c1; font-style: italic; }
-    .card-body strong { color: #f7dde0; font-weight: 600; }
-
-    .card-footer {
-      padding: 20px 28px 28px;
-      text-align: center;
-      border-top: 1px solid rgba(255,140,160,0.1);
-    }
-    .back-link {
-      display: inline-block;
-      color: rgba(247,221,224,0.45);
-      font-size: 0.85rem;
-      text-decoration: none;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      transition: color 0.2s;
-    }
-    .back-link:hover { color: rgba(247,221,224,0.7); }
-
-    /* redirect fallback */
-    #fallback {
-      display: none;
-      text-align: center;
-      color: rgba(247,221,224,0.5);
-      font-size: 1rem;
-      padding: 40px 20px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-<!-- floating hearts background -->
 <div class="heart-bg" id="heartsBg"></div>
 
-<div class="card" id="letterCard" style="display:none;">
+<!-- The letter content is now embedded here (hidden until unlocked) -->
+<div id="specialLetterContent" style="display:none;" data-title="happy anniversary, my love 💝">
+  my love,
+
+  Happy anniversary to the person who has made my heart feel so full, so safe, and so endlessly happy.
+
+  Every day with you feels like a blessing, and every memory we have made together is one I hold close to my heart.
+
+  Thank you for your love, your patience, your laughter, and the warmth you bring into every moment of my life. You are my favorite person, my comfort, and my home.
+
+  I am so grateful for you, for us, and for all the beautiful days still ahead. I love you more than words can say.
+
+  Happy anniversary, my heart. 🤍
+</div>
+
+<div class="special-card" id="letterCard" style="display:none;">
   <div class="card-header">
     <span class="header-icon">💝</span>
     <div class="header-title" id="letterTitle"></div>
@@ -134,49 +38,12 @@
   </div>
 </div>
 
-<div id="fallback">
+<div id="fallback" style="display:none; text-align:center; color:rgba(247,221,224,0.5); font-size:1rem; padding:40px 20px;">
   <p>💌</p>
   <p style="margin-top:12px;">no letter here yet.</p>
   <a href="letters.html" style="color:#c9485b; text-decoration:none; display:block; margin-top:20px;">← go back</a>
 </div>
 
-<script>
-  // Read the letter stored in sessionStorage by letters.html
-  const raw = sessionStorage.getItem('specialLetter');
-
-  if (!raw) {
-    // Navigated here directly without unlocking — bounce back
-    document.getElementById('fallback').style.display = 'block';
-  } else {
-    sessionStorage.removeItem('specialLetter'); // one-time read
-    const { title, message } = JSON.parse(raw);
-
-    document.getElementById('letterTitle').textContent = title;
-
-    // Split message on newlines into paragraphs
-    const body = document.getElementById('letterBody');
-    message.split('\n').filter(l => l.trim()).forEach(line => {
-      const p = document.createElement('p');
-      p.textContent = line;
-      body.appendChild(p);
-    });
-
-    document.getElementById('letterCard').style.display = 'block';
-    document.title = title + ' 💝';
-  }
-
-  // Floating hearts
-  const bg = document.getElementById('heartsBg');
-  const emojis = ['❤️','💕','🤍','💖','✨'];
-  for (let i = 0; i < 14; i++) {
-    const s = document.createElement('span');
-    s.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-    s.style.left     = Math.random() * 100 + '%';
-    s.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
-    s.style.animationDuration  = (6 + Math.random() * 8) + 's';
-    s.style.animationDelay     = (Math.random() * 8) + 's';
-    bg.appendChild(s);
-  }
-</script>
+<script src="script.js"></script>
 </body>
 </html>

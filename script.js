@@ -1,12 +1,20 @@
 (function() {
-    const lockScreen = document.getElementById('lockScreen');
-    const lockContainer = document.querySelector('.lock-container');
-    const pinDotEls = document.querySelectorAll('#pinDots .pin-dot');
+    'use strict';
 
-    let enteredPin = '';
-    let checking = false;
+    // ── LOCK SCREEN ──
+    (function initLock() {
+        const lockScreen = document.getElementById('lockScreen');
+        if (!lockScreen) return;
 
-    if (lockScreen && pinDotEls.length) {
+        if (sessionStorage.getItem('unlocked') === 'true') {
+            lockScreen.classList.add('hidden');
+            return;
+        }
+
+        const pinDotEls = document.querySelectorAll('#pinDots .pin-dot');
+        let enteredPin = '';
+        let checking = false;
+
         function updatePinDots() {
             pinDotEls.forEach((dot, i) => {
                 dot.classList.toggle('filled', i < enteredPin.length);
@@ -26,18 +34,17 @@
                 });
                 const data = await res.json();
                 ok = !!data.ok;
-            } catch (e) {
-                ok = false;
-            }
+            } catch { ok = false; }
 
             if (ok) {
                 pinDotEls.forEach(d => d.classList.add('success'));
+                sessionStorage.setItem('unlocked', 'true');
                 setTimeout(() => lockScreen.classList.add('hidden'), 450);
             } else {
                 pinDotEls.forEach(d => d.classList.add('error'));
-                lockContainer.classList.add('pin-shake');
+                document.querySelector('.lock-container').classList.add('pin-shake');
                 setTimeout(() => {
-                    lockContainer.classList.remove('pin-shake');
+                    document.querySelector('.lock-container').classList.remove('pin-shake');
                     enteredPin = '';
                     updatePinDots();
                     checking = false;
@@ -48,7 +55,7 @@
         document.querySelectorAll('#keypad .key[data-k]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const k = btn.dataset.k;
-                if (k === '' || enteredPin.length >= 6) return;
+                if (k === '' || enteredPin.length >= 6 || checking) return;
                 enteredPin += k;
                 updatePinDots();
                 checkPin();
@@ -62,370 +69,430 @@
                 updatePinDots();
             });
         }
-    }
+    })();
 
-    // ----- 14 reasons -----
-    const reasonsList = [
-        "the way you smile at me",
-        "the way you talk to me",
-        "you still laugh at my jokes",
-        "the way you are constantly trying to learn new things",
-        "your eyes when you talk about dreams",
-        "the way you call me babe",
-        "you are really intellectual",
-        "you make everyday days feel like valentine",
-        "the way you hold my hand",
-        "you always pray for me",
-        "your strength when things are hard",
-        "the cute faces you make ",
-        "you chose me back",
-        "you are you, and that's everything I love"
-    ];
+    // ── REASONS ──
+    (function initReasons() {
+        const grid = document.getElementById('reasonsGrid');
+        if (!grid) return;
 
-    let revealedIdx = 0;
-    const reasonsGrid = document.getElementById('reasonsGrid');
-    const counterSpan = document.getElementById('reasonCounter');
-    const revealBtn = document.getElementById('revealOneMore');
-    const revealAllBtn = document.getElementById('revealAllBtn');
+        const source = document.getElementById('reasonsSource');
+        if (!source) return;
+        const reasons = Array.from(source.querySelectorAll('li')).map(li => li.textContent.trim());
 
-    if (reasonsGrid) {
-        function renderReasons() {
-            reasonsGrid.innerHTML = '';
-            for (let i = 0; i < revealedIdx; i++) {
+        let revealed = 1;
+        const counter = document.getElementById('reasonCounter');
+        const revealBtn = document.getElementById('revealOneMore');
+        const revealAllBtn = document.getElementById('revealAllBtn');
+
+        function render() {
+            grid.innerHTML = '';
+            for (let i = 0; i < revealed; i++) {
                 const div = document.createElement('div');
                 div.className = 'reason-card';
-                div.innerText = reasonsList[i];
-                reasonsGrid.appendChild(div);
+                div.textContent = reasons[i];
+                grid.appendChild(div);
             }
-            counterSpan.innerText = `${revealedIdx} / 14 revealed`;
-            if (revealedIdx >= 7) revealAllBtn.classList.remove('hidden');
-            if (revealedIdx >= 14) revealBtn.disabled = true;
+            counter.textContent = `${revealed} / ${reasons.length} revealed`;
+            if (revealed >= 7) revealAllBtn.classList.remove('hidden');
+            if (revealed >= reasons.length) revealBtn.disabled = true;
         }
+
         revealBtn.addEventListener('click', () => {
-            if (revealedIdx < 14) {
-                revealedIdx++;
-                renderReasons();
+            if (revealed < reasons.length) {
+                revealed++;
+                render();
             }
-            if (revealedIdx === 14) {
-                revealBtn.innerText = 'all revealed 💕';
+            if (revealed === reasons.length) {
+                revealBtn.textContent = 'all revealed 💕';
                 revealBtn.style.opacity = '0.6';
             }
         });
+
         revealAllBtn.addEventListener('click', () => {
-            revealedIdx = 14;
-            renderReasons();
-            revealBtn.innerText = 'all revealed 💕';
-        });
-        revealedIdx = 1;
-        renderReasons();
-    }
-
-    // ----- surprise game (with message overlay) -----
-    const questions = [
-        { question: "where did we first connect?", options: ["your house", "that party", "online", "my shop"], correct: 3, memory: "you were showing your 32... lol. First time I ever saw an angel✨" },
-        { question: "what couldn't you finish on our first date?", options: ["the cake", "the parfait", "the doughnuts", "me"], correct: 1, memory: "Like how can you get filled from drinking chilled yoghurt... 😂" },
-        { question: "How much do you think I love you?", options: ["you don't love me", "About 50%", "maybe 80%", "so much"], correct: 3, memory: "You know how they say some moments feel like a lifetime? Every second with you does that. My love for you is measured in eternities that only last an instant. I LOVE YOU MON CŒUR❤" },
-        { question: "When is our anniversary?(I think I got it but it is you tun to guss)", options: ["june 05 2021", "May 04 2021", "july 25 2021", "september 22 2021"], correct: 2, memory: "I think it was the sunday evening I phoned you and then asked you out" }
-    ];
-    let qIndex = 0;
-    const startDiv = document.getElementById('gameStart');
-    const playDiv = document.getElementById('gamePlay');
-    const endDiv = document.getElementById('gameEnd');
-    const questionBox = document.getElementById('questionBox');
-    const optionsBox = document.getElementById('optionsBox');
-    const progress = document.getElementById('gameProgress');
-
-    // overlay elements (for game only)
-    const overlay = document.getElementById('messageOverlay');
-    const msgEmoji = document.getElementById('messageEmoji');
-    const msgContent = document.getElementById('messageContent');
-    const msgHint = document.getElementById('messageHint');
-    const closeMsgBtn = document.getElementById('closeMessageBtn');
-
-    if (startDiv && playDiv && endDiv) {
-        let pendingNextQuestion = false;
-        function showMessageOverlay(text, isCorrect, opts = {}) {
-            msgEmoji.innerText = opts.emoji ?? (isCorrect ? '✨' : '💭');
-            msgContent.innerHTML = text;
-            msgHint.innerText = (typeof opts.hint !== 'undefined') ? opts.hint : (isCorrect ? '· correct ·' : '');
-            pendingNextQuestion = !!opts.nextOnClose;
-            overlay.classList.add('active');
-        }
-
-        function closeOverlay() {
-            overlay.classList.remove('active');
-            if (pendingNextQuestion) {
-                pendingNextQuestion = false;
-                qIndex++;
-                showQuestion();
-            }
-        }
-        closeMsgBtn.addEventListener('click', closeOverlay);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeOverlay();
+            revealed = reasons.length;
+            render();
+            revealBtn.textContent = 'all revealed 💕';
         });
 
-        document.getElementById('startGameBtn').addEventListener('click', () => {
-            startDiv.classList.add('hidden');
-            playDiv.classList.remove('hidden');
-            qIndex = 0;
-            showQuestion();
-        });
+        render();
+    })();
 
-        function showQuestion() {
-            if (qIndex >= questions.length) {
-                playDiv.classList.add('hidden');
-                endDiv.classList.remove('hidden');
-                return;
-            }
-            const q = questions[qIndex];
-            questionBox.innerText = q.question;
-            let optsHtml = '';
-            q.options.forEach((opt, i) => {
-                optsHtml += `<button class="option-btn" data-opt-index="${i}">${opt}</button>`;
-            });
-            optionsBox.innerHTML = optsHtml;
-            progress.innerText = `question ${qIndex+1} of ${questions.length}`;
-            
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const selected = parseInt(e.target.dataset.optIndex);
-                    const currentQ = questions[qIndex];
-                    
-                    document.querySelectorAll('.option-btn').forEach(b => {
-                        b.classList.remove('correct-guess', 'wrong-guess');
-                    });
-                    
-                    if (selected === currentQ.correct) {
-                        e.target.classList.add('correct-guess');
-                        showMessageOverlay(currentQ.memory, true, { nextOnClose: true });
-                    } else {
-                        e.target.classList.add('wrong-guess');
-                        showMessageOverlay('try again', false);
-                    }
+    // ── GALLERY ──
+    (function initGallery() {
+        const grid = document.getElementById('galleryGrid');
+        if (!grid) return;
+
+        const template = document.getElementById('gallerySource');
+        const items = [];
+        if (template) {
+            const children = template.content.querySelectorAll('[data-src]');
+            children.forEach(el => {
+                items.push({
+                    src: el.dataset.src,
+                    caption: el.dataset.caption || '💭'
                 });
             });
         }
-    }
 
-    // ----- OPEN WHEN LETTERS now lives in letters.html -----
+        let mems = [];
+        try { mems = JSON.parse(localStorage.getItem('memories') || '[]'); } catch {}
+        const memImages = mems.filter(m => m.image).map(m => ({
+            src: m.image,
+            caption: m.title || 'Memory'
+        }));
 
-    // ----- GALLERY -----
-    const galleryGrid = document.getElementById('galleryGrid');
-
-    // Full image list — matches the /images folder exactly.
-    // Edit captions freely. Order is randomized on every load.
-    const allGalleryImages = [
-        { file: 'ohima (1).jpeg', caption: 'You look like a queen 👑' },
-        { file: 'ohima (1).jpg',  caption: 'See teeth 😁' },
-        { file: 'ohima (1).png',  caption: 'You always glow' },
-        { file: 'ohima (2).jpg',  caption: 'Stupendous in my opinion' },
-        { file: 'ohima (3).jpg',  caption: 'Hot kidd 🔥' },
-        { file: 'ohima (4).jpg',  caption: 'lol 😄' },
-        { file: 'ohima (5).jpg',  caption: '2022 I guess' },
-        { file: 'ohima (6).jpg',  caption: 'Corper weee 🎖️' },
-        { file: 'ohima (7).jpg',  caption: 'My love 🤍' },
-        { file: 'ohima (8).jpg',  caption: 'I love you' },
-        { file: 'ohima (9).jpg',  caption: 'Remember this one?' },
-        { file: 'ohima (10).jpg', caption: 'Still my favourite' },
-        { file: 'ohima (11).jpg', caption: 'Pure sunshine ☀️' },
-        { file: 'ohima (12).jpg', caption: 'This smile 🥹' },
-        { file: 'ohima (13).jpg', caption: 'Always her' },
-        { file: 'ohima (14).jpg', caption: 'Mon cœur 🤍' },
-        { file: 'ohima (15).jpg', caption: 'Radiant as always' },
-        { file: 'ohima (16).jpg', caption: 'She doesn\'t miss 💅' },
-        { file: 'ohima (17).jpg', caption: 'Beautiful soul' },
-        { file: 'ohima (18).jpg', caption: 'Says it all ❤️' },
-    ];
-
-    function shuffle(arr) {
-        const a = arr.slice();
-        for (let i = a.length - 1; i > 0; i--) {
+        const combined = [...items, ...memImages];
+        for (let i = combined.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [a[i], a[j]] = [a[j], a[i]];
+            [combined[i], combined[j]] = [combined[j], combined[i]];
         }
-        return a;
-    }
 
-    // ----- PHOTO STRIP (hub page) — 5 random images each load -----
-    const photoStrip = document.getElementById('photoStrip');
-    if (photoStrip) {
-        shuffle(allGalleryImages).slice(0, 5).forEach((item) => {
-            const img = document.createElement('img');
-            img.className = 'hub-photo';
-            img.src = `images/${item.file}`;
-            img.alt = 'us';
-            img.loading = 'lazy';
-            photoStrip.appendChild(img);
-        });
-    }
-
-    // Randomize order on every page load — show all images
-    if (galleryGrid) {
-        shuffle(allGalleryImages).forEach((item) => {
-            const src = `images/${item.file}`;
+        combined.forEach(item => {
             const div = document.createElement('div');
             div.className = 'gallery-item';
             div.innerHTML = `
                 <div class="photo-caption">${item.caption}</div>
-                <img src="${src}" alt="memory" loading="lazy">
+                <img src="${item.src.startsWith('data:') ? item.src : 'images/' + item.src}" alt="memory" loading="lazy">
             `;
-            div.addEventListener('click', () => expandImage(src, item.caption));
-            galleryGrid.appendChild(div);
+            div.addEventListener('click', () => expandImage(item.src, item.caption));
+            grid.appendChild(div);
         });
-    }
 
-    window.expandImage = function(src, caption) {
-        document.getElementById('expandedImg').src = src;
-        document.getElementById('caption').innerText = caption;
-        document.getElementById('lightbox').classList.remove('hidden');
-    };
-    window.closeLightbox = function() {
-        document.getElementById('lightbox').classList.add('hidden');
-    };
+        window.expandImage = function(src, caption) {
+            document.getElementById('expandedImg').src = src.startsWith('data:') ? src : 'images/' + src;
+            document.getElementById('caption').textContent = caption;
+            document.getElementById('lightbox').classList.remove('hidden');
+        };
+        window.closeLightbox = function() {
+            document.getElementById('lightbox').classList.add('hidden');
+        };
+    })();
 
-    // ----- MEMORY VAULT with image support -----
-    // 🤍 Hardcoded memories — edit titles/dates/notes freely, or delete entries you don't want.
-    // For a photo, drop the file in /images and set image: "images/yourfile.jpg"
-    const hardcodedMemories = [
-        {
-            title: "The day we met",
-            date: "2021-06-05",
-            note: "EDIT ME: write what happened the day it all started.",
-            tag: "first",
-            image: null
-        },
-        {
-            title: "Our anniversary",
-            date: "2021-07-25",
-            note: "EDIT ME: write about this milestone.",
-            tag: "milestone",
-            image: null
-        },
-        {
-            title: "EDIT ME: give this memory a title",
-            date: "",
-            note: "EDIT ME: describe the moment, then add as many more of these blocks as you like.",
-            tag: "everyday",
-            image: null
-        }
-    ];
+    // ── HUB PHOTO STRIP ──
+    (function initHub() {
+        const strip = document.getElementById('photoStrip');
+        if (!strip) return;
 
-    function getMemories() {
-        const saved = JSON.parse(localStorage.getItem('memories') || '[]');
-        return [...saved, ...hardcodedMemories];
-    }
-
-    function renderVault() {
-        const vaultContent = document.getElementById('vaultContent');
-        const mems = getMemories();
-        if (!mems.length) {
-            vaultContent.innerHTML = '<div style="text-align:center; padding:60px 20px; color:#b85763;">✨ no memories yet.<br>add your first one together.</div>';
-            return;
-        }
-        let html = '<div style="display:flex; flex-direction:column; gap:16px;">';
-        mems.forEach((m) => {
-            const dateStr = m.date ? new Date(m.date+'T12:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : 'a special day';
-            html += `
-                <div style="background:white; border-radius:30px; padding:18px 20px; border:2px solid #ffe2e2; box-shadow:0 4px 12px rgba(170,80,90,0.1);">
-                    <div style="font-size:0.8rem; color:#b85763; text-transform:uppercase; letter-spacing:1px;">${dateStr}</div>
-                    <div style="font-size:1.3rem; font-weight:600; color:#b13e4b; margin:4px 0 8px;">${m.title}</div>
-                    ${m.note ? `<div style="color:#ac7b81; margin-bottom:8px;">${m.note}</div>` : ''}
-                    <div style="display:inline-block; background:#ffd9d9; padding:4px 14px; border-radius:30px; font-size:0.9rem; color:#a53f4d;">${m.tag}</div>
-                    ${m.image ? `<div style="margin-top:12px;"><img src="${m.image}" style="max-width:100%; max-height:200px; border-radius:20px; border:2px solid #ffe2e2;"></div>` : ''}
-                </div>
-            `;
+        const source = document.getElementById('stripSource');
+        if (!source) return;
+        const files = source.dataset.images.split(',').map(s => s.trim());
+        const shuffled = files.sort(() => 0.5 - Math.random());
+        shuffled.slice(0, 5).forEach(file => {
+            const img = document.createElement('img');
+            img.className = 'hub-photo';
+            img.src = `images/${file}`;
+            img.alt = 'us';
+            img.loading = 'lazy';
+            strip.appendChild(img);
         });
-        html += '</div>';
-        vaultContent.innerHTML = html;
-    }
+    })();
 
-    // ----- ADD MEMORY (with image resize & storage) -----
-    const memImageInput = document.getElementById('memImage');
-    const imagePreview = document.getElementById('imagePreview');
-    const previewImg = document.getElementById('previewImg');
-    let imageDataURL = null;
+    // ── MEMORY VAULT ──
+    (function initVault() {
+        const container = document.getElementById('vaultContent');
+        if (!container) return;
 
-    if (memImageInput && imagePreview && previewImg) {
-        memImageInput.addEventListener('change', function(e) {
-            const file = this.files[0];
-            if (!file) {
-                imagePreview.style.display = 'none';
-                imageDataURL = null;
+        function getMemories() {
+            try { return JSON.parse(localStorage.getItem('memories') || '[]'); }
+            catch { return []; }
+        }
+
+        function render() {
+            const mems = getMemories();
+            if (!mems.length) {
+                container.innerHTML = `<div style="text-align:center; padding:60px 20px; color:#b85763;">✨ no memories yet.<br>add your first one together.</div>`;
                 return;
             }
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX = 400;
-                    let width = img.width, height = img.height;
-                    if (width > height) {
-                        if (width > MAX) { height = height * (MAX / width); width = MAX; }
-                    } else {
-                        if (height > MAX) { width = width * (MAX / height); height = MAX; }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                    imageDataURL = dataUrl;
-                    previewImg.src = dataUrl;
-                    imagePreview.style.display = 'block';
-                };
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
+            let html = '<div style="display:flex; flex-direction:column; gap:16px;">';
+            mems.forEach(m => {
+                const dateStr = m.date ? new Date(m.date+'T12:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : 'a special day';
+                html += `
+                    <div style="background:white; border-radius:30px; padding:18px 20px; border:2px solid #ffe2e2; box-shadow:0 4px 12px rgba(170,80,90,0.1);">
+                        <div style="font-size:0.8rem; color:#b85763; text-transform:uppercase; letter-spacing:1px;">${dateStr}</div>
+                        <div style="font-size:1.3rem; font-weight:600; color:#b13e4b; margin:4px 0 8px;">${m.title}</div>
+                        ${m.note ? `<div style="color:#ac7b81; margin-bottom:8px;">${m.note}</div>` : ''}
+                        <div style="display:inline-block; background:#ffd9d9; padding:4px 14px; border-radius:30px; font-size:0.9rem; color:#a53f4d;">${m.tag}</div>
+                        ${m.image ? `<div style="margin-top:12px;"><img src="${m.image}" style="max-width:100%; max-height:200px; border-radius:20px; border:2px solid #ffe2e2;"></div>` : ''}
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
 
-        document.getElementById('saveMemoryBtn').addEventListener('click', function() {
+        render();
+        window.refreshVault = render;
+    })();
+
+    // ── ADD MEMORY ──
+    (function initAddMemory() {
+        const saveBtn = document.getElementById('saveMemoryBtn');
+        if (!saveBtn) return;
+
+        const imageInput = document.getElementById('memImage');
+        const preview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        let imageDataURL = null;
+
+        if (imageInput && preview && previewImg) {
+            imageInput.addEventListener('change', function(e) {
+                const file = this.files[0];
+                if (!file) {
+                    preview.style.display = 'none';
+                    imageDataURL = null;
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX = 400;
+                        let w = img.width, h = img.height;
+                        if (w > h) {
+                            if (w > MAX) { h = h * (MAX / w); w = MAX; }
+                        } else {
+                            if (h > MAX) { w = w * (MAX / h); h = MAX; }
+                        }
+                        canvas.width = w; canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        imageDataURL = dataUrl;
+                        previewImg.src = dataUrl;
+                        preview.style.display = 'block';
+                    };
+                    img.src = ev.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        saveBtn.addEventListener('click', function() {
             const title = document.getElementById('memTitle').value.trim();
             const date = document.getElementById('memDate').value;
             const note = document.getElementById('memNote').value.trim();
             const tag = document.getElementById('memTag').value;
             if (!title) { document.getElementById('memTitle').focus(); return; }
-            const mems = getMemories();
-            mems.unshift({
-                title,
-                date,
-                note,
-                tag,
-                image: imageDataURL || null,
-                id: Date.now()
-            });
+
+            let mems = [];
+            try { mems = JSON.parse(localStorage.getItem('memories') || '[]'); } catch {}
+            mems.unshift({ title, date, note, tag, image: imageDataURL || null, id: Date.now() });
             localStorage.setItem('memories', JSON.stringify(mems));
+
             document.getElementById('memTitle').value = '';
             document.getElementById('memDate').value = '';
             document.getElementById('memNote').value = '';
-            memImageInput.value = '';
-            imagePreview.style.display = 'none';
+            imageInput.value = '';
+            preview.style.display = 'none';
             imageDataURL = null;
-            const t = document.getElementById('toast');
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2200);
-            if (document.getElementById('pageVault')) renderVault();
+
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2200);
+
+            if (window.refreshVault) window.refreshVault();
         });
-    }
+    })();
 
-    // ----- floating hearts -----
-    function addFloater() {
-        const heart = document.createElement('div');
-        heart.innerText = '❤️';
-        heart.style.position = 'fixed';
-        heart.style.left = Math.random() * 100 + '%';
-        heart.style.bottom = '-20px';
-        heart.style.fontSize = '1.7rem';
-        heart.style.pointerEvents = 'none';
-        heart.style.zIndex = '1000';
-        heart.style.animation = 'float-up 4s linear forwards';
-        document.body.appendChild(heart);
-        setTimeout(() => heart.remove(), 4000);
-    }
-    setInterval(addFloater, 800);
+    // ── LETTERS ──
+    (function initLetters() {
+        const board = document.getElementById('lettersBoard');
+        if (!board) return;
 
-    const style = document.createElement('style');
-    style.innerHTML = `@keyframes float-up { to { transform: translateY(-100vh); opacity:0; }}`;
-    document.head.appendChild(style);
+        const source = document.getElementById('lettersSource');
+        if (!source) return;
+        const letterElements = source.content.querySelectorAll('.letter-data');
+        const letters = Array.from(letterElements).map(el => ({
+            icon: el.dataset.icon,
+            label: el.dataset.label,
+            sub: el.dataset.sub,
+            content: el.innerHTML
+        }));
+
+        const modal = document.getElementById('letterModal');
+        const modalCard = document.getElementById('letterModalCard');
+        const modalIcon = document.getElementById('modalIcon');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const closeBtn = document.getElementById('closeLetterBtn');
+
+        function openLetter(letter, dark) {
+            modalIcon.textContent = letter.icon;
+            modalTitle.textContent = 'open when ' + letter.label;
+            modalBody.innerHTML = letter.content;
+            modalCard.classList.toggle('dark-modal', !!dark);
+            modal.classList.add('active');
+        }
+        function closeLetter() { modal.classList.remove('active'); }
+
+        closeBtn.addEventListener('click', closeLetter);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeLetter(); });
+
+        letters.forEach(l => {
+            const el = document.createElement('div');
+            el.className = 'letter-envelope';
+            el.innerHTML = `
+                <div class="envelope-inner">
+                    <div class="envelope-seal">${l.icon}</div>
+                    <div class="envelope-text">
+                        <div class="envelope-label">open when ${l.label}</div>
+                        <div class="envelope-sub">${l.sub}</div>
+                    </div>
+                    <div class="envelope-status-chip">unopened</div>
+                </div>
+            `;
+            el.addEventListener('click', () => {
+                openLetter(l, false);
+                el.classList.add('opened');
+                el.querySelector('.envelope-status-chip').textContent = 'opened ❤️';
+            });
+            board.appendChild(el);
+        });
+
+        // ── SPECIAL LETTER PIN (no content stored; just set flag) ──
+        const specialEnvelope = document.getElementById('specialEnvelope');
+        const specialPinWrap = document.getElementById('specialPinWrap');
+        const specialDots = document.querySelectorAll('.s-dot');
+        const specialErr = document.getElementById('specialErr');
+
+        if (specialEnvelope && specialPinWrap) {
+            let sPin = '', sChecking = false;
+
+            specialEnvelope.addEventListener('click', () => {
+                specialPinWrap.style.display = 'block';
+                specialEnvelope.style.display = 'none';
+                specialPinWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+
+            function updateDots() {
+                specialDots.forEach((d, i) => {
+                    d.classList.toggle('filled', i < sPin.length);
+                    d.classList.remove('error', 'ok');
+                });
+                specialErr.style.display = 'none';
+            }
+
+            async function checkSpecialPin() {
+                if (sPin.length < 4 || sChecking) return;
+                sChecking = true;
+                try {
+                    const res = await fetch('/.netlify/functions/check-special-pin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pin: sPin })
+                    });
+                    const data = await res.json();
+                    if (data.ok) {
+                        specialDots.forEach(d => d.classList.add('ok'));
+                        // Set session flag and redirect
+                        sessionStorage.setItem('specialUnlocked', 'true');
+                        setTimeout(() => { window.location.href = 'special.html'; }, 500);
+                    } else {
+                        specialDots.forEach(d => d.classList.add('error'));
+                        specialPinWrap.classList.add('s-shake');
+                        specialErr.style.display = 'block';
+                        setTimeout(() => {
+                            specialPinWrap.classList.remove('s-shake');
+                            sPin = '';
+                            updateDots();
+                            sChecking = false;
+                        }, 500);
+                    }
+                } catch {
+                    sPin = '';
+                    updateDots();
+                    sChecking = false;
+                }
+            }
+
+            document.querySelectorAll('.s-key[data-k]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const k = btn.dataset.k;
+                    if (k === '' || sPin.length >= 4 || sChecking) return;
+                    sPin += k;
+                    updateDots();
+                    checkSpecialPin();
+                });
+            });
+            document.getElementById('sDelKey').addEventListener('click', () => {
+                sPin = sPin.slice(0, -1);
+                updateDots();
+            });
+        }
+    })();
+
+    // ── SPECIAL LETTER DISPLAY (special.html) ──
+    (function initSpecial() {
+        const card = document.getElementById('letterCard');
+        if (!card) return;
+
+        // Check if we came from a successful unlock
+        if (sessionStorage.getItem('specialUnlocked') !== 'true') {
+            document.getElementById('fallback').style.display = 'block';
+            return;
+        }
+        // Consume the flag
+        sessionStorage.removeItem('specialUnlocked');
+
+        // Read the letter content from the hidden div on this page
+        const contentDiv = document.getElementById('specialLetterContent');
+        if (!contentDiv) {
+            document.getElementById('fallback').style.display = 'block';
+            return;
+        }
+
+        const title = contentDiv.dataset.title || 'a letter for you 💌';
+        const message = contentDiv.textContent.trim();
+
+        document.getElementById('letterTitle').textContent = title;
+        const body = document.getElementById('letterBody');
+        // Split by newlines and create <p> for each non‑empty line
+        message.split('\n').filter(l => l.trim()).forEach(line => {
+            const p = document.createElement('p');
+            p.textContent = line;
+            body.appendChild(p);
+        });
+
+        card.style.display = 'block';
+        document.title = title + ' 💝';
+
+        // Floating hearts background
+        const bg = document.getElementById('heartsBg');
+        if (bg) {
+            const emojis = ['❤️','💕','🤍','💖','✨'];
+            for (let i = 0; i < 14; i++) {
+                const s = document.createElement('span');
+                s.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                s.style.left = Math.random() * 100 + '%';
+                s.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+                s.style.animationDuration = (6 + Math.random() * 8) + 's';
+                s.style.animationDelay = (Math.random() * 8) + 's';
+                bg.appendChild(s);
+            }
+        }
+    })();
+
+    // ── FLOATING HEARTS (global) ──
+    (function addFloatingHearts() {
+        const style = document.createElement('style');
+        style.textContent = `@keyframes float-up { to { transform: translateY(-100vh); opacity:0; } }`;
+        document.head.appendChild(style);
+
+        function addFloater() {
+            const heart = document.createElement('div');
+            heart.textContent = '❤️';
+            heart.style.position = 'fixed';
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.bottom = '-20px';
+            heart.style.fontSize = '1.7rem';
+            heart.style.pointerEvents = 'none';
+            heart.style.zIndex = '1000';
+            heart.style.animation = 'float-up 4s linear forwards';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 4000);
+        }
+        setInterval(addFloater, 800);
+    })();
 })();

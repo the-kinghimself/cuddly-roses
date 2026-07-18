@@ -18,12 +18,9 @@
     <div class="lock-title">mon cœur</div>
     <div class="lock-sub">our memories</div>
     <div class="pin-dots" id="pinDots">
-      <div class="pin-dot"></div>
-      <div class="pin-dot"></div>
-      <div class="pin-dot"></div>
-      <div class="pin-dot"></div>
-      <div class="pin-dot"></div>
-      <div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div>
     </div>
     <div class="keypad" id="keypad">
       <button class="key" data-k="1">1</button>
@@ -39,11 +36,11 @@
       <button class="key" data-k="0">0</button>
       <button class="key del" id="delKey">⌫</button>
     </div>
-    <div class="pin-hint" id="pinHint">anniversary (6 digits)</div>
+    <div class="pin-hint">anniversary (6 digits)</div>
   </div>
 </div>
 
-<!-- ====== HUB PAGE (locked behind PIN) ====== -->
+<!-- ====== HUB PAGE ====== -->
 <div id="pageHub" class="page active">
   <div class="nav-row" style="justify-content:flex-end;">
     <span class="hub-icon">💕</span>
@@ -51,7 +48,9 @@
   <h2>our little world</h2>
   <div class="subtitle">every moment with you is a treasure</div>
 
+  <!-- photo strip; images list is in hidden element below -->
   <div class="photo-strip" id="photoStrip"></div>
+  <div id="stripSource" data-images="ohima (1).jpeg, ohima (1).jpg, ohima (1).png, ohima (2).jpg, ohima (3).jpg, ohima (4).jpg, ohima (5).jpg, ohima (6).jpg, ohima (7).jpg, ohima (8).jpg, ohima (9).jpg, ohima (10).jpg, ohima (11).jpg, ohima (12).jpg, ohima (13).jpg, ohima (14).jpg, ohima (15).jpg, ohima (16).jpg, ohima (17).jpg, ohima (18).jpg" style="display:none;"></div>
 
   <div class="hub-cards">
     <a class="hub-card" href="reasons.html">
