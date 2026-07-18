@@ -151,9 +151,10 @@
         combined.forEach(item => {
             const div = document.createElement('div');
             div.className = 'gallery-item';
+            const imageSrc = item.src.startsWith('data:') ? item.src : 'images/' + item.src;
             div.innerHTML = `
                 <div class="photo-caption">${item.caption}</div>
-                <img src="${item.src.startsWith('data:') ? item.src : 'images/' + item.src}" alt="memory" loading="lazy">
+                <img src="${imageSrc}" alt="memory" loading="lazy" onerror="this.onerror=null; this.src='images/ohima (1).jpg';">
             `;
             div.addEventListener('click', () => expandImage(item.src, item.caption));
             grid.appendChild(div);
@@ -184,6 +185,7 @@
             img.src = `images/${file}`;
             img.alt = 'us';
             img.loading = 'lazy';
+            img.onerror = () => { img.src = 'images/ohima (1).jpg'; };
             strip.appendChild(img);
         });
     })();
