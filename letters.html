@@ -1,27 +1,564 @@
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>open when… 💌</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ===== LETTERS PAGE EXTRA STYLES ===== */
+    .letters-page-wrap {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-radius: 48px 48px 32px 32px;
+      box-shadow: 0 30px 50px rgba(220,60,80,0.25);
+      border: 2px solid rgba(255,220,220,0.7);
+    }
+
+    /* envelope cards */
+    .letter-envelope {
+      background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+      border-radius: 28px;
+      padding: 0;
+      border: 2px solid #ffcece;
+      cursor: pointer;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 14px rgba(180,60,80,0.1);
+    }
+    .letter-envelope:active { transform: scale(0.98); }
+    .letter-envelope.opened {
+      border-color: #ffb3b3;
+      background: linear-gradient(135deg, #fff8f8 0%, #fff3f3 100%);
+    }
+
+    .envelope-inner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+    }
+    .envelope-seal {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff8fa3, #ff4d6d);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(255,77,109,0.35);
+      transition: transform 0.3s;
+    }
+    .letter-envelope.opened .envelope-seal {
+      background: linear-gradient(135deg, #ff6b85, #e63c5c);
+      transform: rotate(10deg);
+    }
+    .envelope-text { flex: 1; }
+    .envelope-label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #b3434f;
+      margin-bottom: 3px;
+      font-family: 'Playfair Display', serif;
+    }
+    .envelope-sub {
+      font-size: 0.85rem;
+      color: #c08090;
+    }
+    .envelope-status-chip {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 30px;
+      background: #ffd9d9;
+      color: #b3434f;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+    .letter-envelope.opened .envelope-status-chip {
+      background: #ffe8cc;
+      color: #b06030;
+    }
+
+    /* ===== SPECIAL PIN PAD ===== */
+    .s-dot {
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      border: 2px solid rgba(201,72,91,0.4);
+      transition: all 0.2s;
+    }
+    .s-dot.filled { background: #c9485b; border-color: #c9485b; box-shadow: 0 0 8px rgba(201,72,91,0.5); }
+    .s-dot.error  { background: #c0392b; border-color: #c0392b; }
+    .s-dot.ok     { background: #27ae60; border-color: #27ae60; }
+    .s-key {
+      height: 54px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+      color: #f7dde0;
+      font-size: 1.25rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.12s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .s-key:active { transform: scale(0.92); background: rgba(255,255,255,0.14); }
+    .s-del { color: rgba(247,221,224,0.45); font-size:1rem; }
+    .s-shake { animation: sShake 0.45s ease; }
+    @keyframes sShake {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
+    }
+    .special-letter-wrap {
+      margin-top: 30px;
+    }
+    .special-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .special-divider::before,
+    .special-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #ffc8c8;
+    }
+    .special-divider span {
+      font-size: 0.75rem;
+      color: #c08090;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .special-envelope {
+      background: linear-gradient(135deg, #2d1218 0%, #4a1a24 100%);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(150,30,50,0.35);
+      border: 2px solid rgba(255,120,140,0.2);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .special-envelope:active { transform: scale(0.98); }
+    .special-envelope.locked { cursor: default; }
+
+    .special-envelope-inner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 22px 20px;
+    }
+    .special-seal {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: 2px solid rgba(255,120,140,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+      flex-shrink: 0;
+    }
+    .special-text { flex: 1; }
+    .special-label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #f7dde0;
+      margin-bottom: 4px;
+      font-family: 'Playfair Display', serif;
+    }
+    .special-sub {
+      font-size: 0.82rem;
+      color: rgba(247,221,224,0.45);
+    }
+    .special-chip {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 30px;
+      flex-shrink: 0;
+      letter-spacing: 0.5px;
+    }
+    .special-chip.locked-chip {
+      background: rgba(255,255,255,0.07);
+      color: rgba(247,221,224,0.4);
+    }
+    .special-chip.unlocked-chip {
+      background: rgba(255,180,150,0.15);
+      color: #ffb49a;
+    }
+
+    /* ===== LETTER MODAL ===== */
+    .letter-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10,2,5,0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      padding: 20px;
+    }
+    .letter-modal-overlay.active { display: flex; }
+
+    .letter-modal-card {
+      background: white;
+      border-radius: 40px;
+      width: 100%;
+      max-width: 380px;
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 3px solid #ffcece;
+      box-shadow: 0 30px 60px rgba(180,40,60,0.35);
+      position: relative;
+      animation: popIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+      scrollbar-width: none;
+    }
+    .letter-modal-card::-webkit-scrollbar { display: none; }
+
+    .letter-modal-header {
+      background: linear-gradient(135deg, #fff0f0, #ffe4e4);
+      padding: 28px 24px 20px;
+      border-radius: 38px 38px 0 0;
+      text-align: center;
+      border-bottom: 1px solid #ffd5d5;
+    }
+    .letter-modal-icon { font-size: 2.8rem; margin-bottom: 8px; }
+    .letter-modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-style: italic;
+      color: #b13e4b;
+    }
+
+    .letter-modal-body {
+      padding: 24px;
+      color: #7a4550;
+      font-size: 1.05rem;
+      line-height: 1.85;
+    }
+    .letter-modal-body p { margin-bottom: 14px; }
+    .letter-modal-body p:last-child { margin-bottom: 0; }
+
+    .letter-modal-close {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      padding: 16px 24px 20px;
+      border-top: 1px solid #ffe4e4;
+      border-radius: 0 0 38px 38px;
+    }
+    .letter-close-btn {
+      width: 100%;
+      background: #ff4d6d;
+      border: none;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 14px;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #b13e4b;
+      transition: 0.1s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .letter-close-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b13e4b; }
+
+    /* special modal dark theme */
+    .letter-modal-card.dark-modal {
+      background: #1a0a0e;
+      border-color: rgba(255,120,140,0.25);
+    }
+    .letter-modal-card.dark-modal .letter-modal-header {
+      background: linear-gradient(135deg, #2d1218, #3d1820);
+      border-bottom-color: rgba(255,120,140,0.15);
+    }
+    .letter-modal-card.dark-modal .letter-modal-title { color: #f7dde0; }
+    .letter-modal-card.dark-modal .letter-modal-body { color: rgba(247,221,224,0.82); }
+    .letter-modal-card.dark-modal .letter-modal-close {
+      background: #1a0a0e;
+      border-top-color: rgba(255,120,140,0.15);
+    }
+    .letter-modal-card.dark-modal .letter-close-btn {
+      background: rgba(201,72,91,0.85);
+      box-shadow: 0 4px 0 rgba(120,20,35,0.8);
+    }
+  </style>
+</head>
+<body>
+
+<div class="letters-page-wrap">
+  <div class="nav-row">
+    <a class="back-btn" href="index.html" style="text-decoration:none;">←</a>
+    <h2 style="margin:0; font-family:'Playfair Display',serif; font-style:italic;">open when…</h2>
+    <span style="width:42px;"></span>
+  </div>
+  <p style="text-align:center; color:#c08090; font-size:0.92rem; margin:-6px 0 24px; font-style:italic;">these are for you, whenever you need them 🤍</p>
+
+  <div class="letters-board" id="lettersBoard"></div>
+
+  <!-- Special Occasion Letter -->
+  <div class="special-letter-wrap">
+    <div class="special-divider"><span>✨ special</span></div>
+
+    <!-- Default sealed state -->
+    <div class="special-envelope" id="specialEnvelope">
+      <div class="special-envelope-inner">
+        <div class="special-seal">💝</div>
+        <div class="special-text">
+          <div class="special-label">a special message</div>
+          <div class="special-sub">enter the code to open</div>
+        </div>
+        <div class="special-chip unlocked-chip">tap 🔑</div>
+      </div>
+    </div>
+
+    <!-- Inline 4-digit PIN pad (hidden until envelope is tapped) -->
+    <div id="specialPinWrap" style="display:none; margin-top:16px; background:rgba(45,18,24,0.9); border-radius:28px; padding:24px 20px; border:1px solid rgba(255,120,140,0.2);">
+      <div style="text-align:center; color:rgba(247,221,224,0.6); font-size:0.78rem; letter-spacing:2px; text-transform:uppercase; margin-bottom:18px;">enter 4-digit code</div>
+      <div id="specialDots" style="display:flex; gap:14px; justify-content:center; margin-bottom:22px;">
+        <div class="s-dot"></div><div class="s-dot"></div>
+        <div class="s-dot"></div><div class="s-dot"></div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:220px; margin:0 auto;">
+        <button class="s-key" data-k="1">1</button>
+        <button class="s-key" data-k="2">2</button>
+        <button class="s-key" data-k="3">3</button>
+        <button class="s-key" data-k="4">4</button>
+        <button class="s-key" data-k="5">5</button>
+        <button class="s-key" data-k="6">6</button>
+        <button class="s-key" data-k="7">7</button>
+        <button class="s-key" data-k="8">8</button>
+        <button class="s-key" data-k="9">9</button>
+        <button class="s-key" data-k="" style="background:transparent;box-shadow:none;cursor:default;"></button>
+        <button class="s-key" data-k="0">0</button>
+        <button class="s-key s-del" id="sDelKey">⌫</button>
+      </div>
+      <div id="specialErr" style="display:none; text-align:center; color:#ff6b85; font-size:0.85rem; margin-top:14px;">wrong code — try again</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== LETTER MODAL ====== -->
+<div class="letter-modal-overlay" id="letterModal">
+  <div class="letter-modal-card" id="letterModalCard">
+    <div class="letter-modal-header">
+      <div class="letter-modal-icon" id="modalIcon">💌</div>
+      <div class="letter-modal-title" id="modalTitle">open when…</div>
+    </div>
+    <div class="letter-modal-body" id="modalBody"></div>
+    <div class="letter-modal-close">
+      <button class="letter-close-btn" id="closeLetterBtn">seal it back 💌</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ── LETTERS DATA ── edit freely; add more objects to add more letters
+  const letters = [
+    {
+      icon: '😔',
+      label: 'you miss me',
+      sub: 'for when that ache hits',
+      content: `
+        <p>My love,</p>
+        <p>If you're reading this, it means you feel that little ache in your chest that whispers my name. Close your eyes for a second.</p>
+        <p>Imagine my arms around you.<br>
+        Imagine the forehead kiss you always love.<br>
+        Imagine me saying softly, <em>"I'm right here, mon cœur."</em></p>
+        <p>Distance doesn't change what we are. Silence doesn't weaken us. If you miss me, it only means what we share is real — and I miss you too, always. Every single day.</p>
+        <p>I love you.</p>
+      `
+    },
+    {
+      icon: '🌧️',
+      label: 'you\'re having a bad day',
+      sub: 'for when everything feels heavy',
+      content: `
+        <p>Hey love,</p>
+        <p>First of all — breathe. In through your nose, out through your mouth. Bad days visit and then they leave. They don't define you.</p>
+        <p>You are not your mistakes. You are not this moment. You are the strongest, kindest, most resilient soul I know — and if today feels too heavy, let me carry part of it.</p>
+        <p>Tomorrow will feel different. I promise. And whenever you need me, I'm always one call away.</p>
+        <p>I love you more than bad days, I promise. 🤍</p>
+      `
+    },
+    {
+      icon: '🏆',
+      label: 'you need a pride reminder',
+      sub: 'for when you forget how far you\'ve come',
+      content: `
+        <p>Stop for a moment.</p>
+        <p>Do you know what I see when I look at you? I see someone who keeps going even when it's hard. Someone who grows quietly, consistently, beautifully.</p>
+        <p>You sometimes forget how powerful you are. I see your light, your effort, and the growth that happens every single day. The version of you reading this is already further than the version of you who started — and that's everything.</p>
+        <p>I am so incredibly proud of you. Never shrink your glow for anyone.</p>
+        <p>All of it — I love it. I love <em>you</em>. 🤍</p>
+      `
+    },
+    {
+      icon: '💭',
+      label: 'you need reassurance',
+      sub: 'for when doubt sneaks in',
+      content: `
+        <p>Mon cœur,</p>
+        <p>If you ever — even for a second — doubt my love, let me be louder than that doubt:</p>
+        <p><strong>I am here. Fully, completely, genuinely here.</strong></p>
+        <p>You don't have to be perfect to deserve my love. You don't have to earn it or prove it. You already have me — all of me — exactly as you are.</p>
+        <p>Whatever that voice in your head is telling you, it's lying. You are wanted. You are chosen. You are loved beyond what words can hold.</p>
+        <p>I love you. Full stop. 🤍</p>
+      `
+    },
+    {
+      icon: '🥹',
+      label: 'you\'re feeling grateful for us',
+      sub: 'for the quiet thankful moments',
+      content: `
+        <p>My heart,</p>
+        <p>If you're reading this thinking about us — about what we've built, about how far we've come — know that I feel it too.</p>
+        <p>I'm grateful for your laugh. Your patience. The way you love me without making it complicated. The way you <em>chose</em> me, and keep choosing me.</p>
+        <p>I don't take a single day of us for granted. This thing we have is rare, and I know it, and I protect it.</p>
+        <p>Thank you for being mine. Thank you for letting me be yours. I love you endlessly.</p>
+        <p>— always yours 🤍</p>
+      `
+    },
+  ];
+
+  // ── RENDER REGULAR LETTERS ──
+  const board = document.getElementById('lettersBoard');
+  const modal = document.getElementById('letterModal');
+  const modalCard = document.getElementById('letterModalCard');
+  const modalIcon = document.getElementById('modalIcon');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalBody = document.getElementById('modalBody');
+  const closeBtn = document.getElementById('closeLetterBtn');
+
+  function openLetter(letter, dark = false) {
+    modalIcon.textContent = letter.icon;
+    modalTitle.textContent = 'open when ' + letter.label;
+    modalBody.innerHTML = letter.content;
+    modalCard.classList.toggle('dark-modal', dark);
+    modal.classList.add('active');
   }
 
-  let pin;
-  try {
-    ({ pin } = JSON.parse(event.body || '{}'));
-  } catch (e) {
-    return { statusCode: 400, body: JSON.stringify({ ok: false, error: 'bad request' }) };
+  function closeLetter() {
+    modal.classList.remove('active');
   }
 
-  const correctPin = process.env.LOCK_PIN;
+  closeBtn.addEventListener('click', closeLetter);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeLetter(); });
 
-  if (!correctPin) {
-    // Misconfiguration on the Netlify side — fail closed, not open.
-    return { statusCode: 500, body: JSON.stringify({ ok: false, error: 'server not configured' }) };
+  letters.forEach((l) => {
+    const el = document.createElement('div');
+    el.className = 'letter-envelope';
+    el.innerHTML = `
+      <div class="envelope-inner">
+        <div class="envelope-seal">${l.icon}</div>
+        <div class="envelope-text">
+          <div class="envelope-label">open when ${l.label}</div>
+          <div class="envelope-sub">${l.sub}</div>
+        </div>
+        <div class="envelope-status-chip">unopened</div>
+      </div>
+    `;
+    el.addEventListener('click', () => {
+      openLetter(l, false);
+      el.classList.add('opened');
+      el.querySelector('.envelope-status-chip').textContent = 'opened ❤️';
+    });
+    board.appendChild(el);
+  });
+
+  // ── SPECIAL OCCASION LETTER — 4-digit PIN ──
+  const specialEnvelope = document.getElementById('specialEnvelope');
+  const specialPinWrap  = document.getElementById('specialPinWrap');
+  const specialDots     = document.querySelectorAll('.s-dot');
+  const specialErr      = document.getElementById('specialErr');
+
+  let sPin = '';
+  let sChecking = false;
+
+  // Tap envelope → reveal PIN pad
+  specialEnvelope.addEventListener('click', () => {
+    specialPinWrap.style.display = 'block';
+    specialEnvelope.style.display = 'none';
+    specialPinWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  function updateSDots() {
+    specialDots.forEach((d, i) => {
+      d.classList.toggle('filled', i < sPin.length);
+      d.classList.remove('error', 'ok');
+    });
+    specialErr.style.display = 'none';
   }
 
-  const match = typeof pin === 'string' && pin === correctPin;
+  async function checkSpecialPin() {
+    if (sPin.length < 4 || sChecking) return;
+    sChecking = true;
+    try {
+      const res  = await fetch('/.netlify/functions/check-special-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: sPin })
+      });
+      const data = await res.json();
 
-  return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ok: match })
-  };
-};
+      if (data.ok) {
+        specialDots.forEach(d => d.classList.add('ok'));
+        // Store letter in sessionStorage then navigate
+        sessionStorage.setItem('specialLetter', JSON.stringify({ title: data.title, message: data.message }));
+        setTimeout(() => { window.location.href = 'special.html'; }, 500);
+      } else {
+        specialDots.forEach(d => d.classList.add('error'));
+        specialPinWrap.classList.add('s-shake');
+        specialErr.style.display = 'block';
+        setTimeout(() => {
+          specialPinWrap.classList.remove('s-shake');
+          sPin = '';
+          updateSDots();
+          sChecking = false;
+        }, 500);
+      }
+    } catch {
+      // Network issue
+      sPin = '';
+      updateSDots();
+      sChecking = false;
+    }
+  }
+
+  document.querySelectorAll('.s-key[data-k]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const k = btn.dataset.k;
+      if (k === '' || sPin.length >= 4 || sChecking) return;
+      sPin += k;
+      updateSDots();
+      checkSpecialPin();
+    });
+  });
+  document.getElementById('sDelKey').addEventListener('click', () => {
+    sPin = sPin.slice(0, -1);
+    updateSDots();
+  });
+})();
+</script>
+</body>
+</html>

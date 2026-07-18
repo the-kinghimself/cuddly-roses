@@ -243,49 +243,64 @@
 
     // ----- GALLERY -----
     const galleryGrid = document.getElementById('galleryGrid');
-    const galleryImages = [
-        'ohima (1).jpeg', 'ohima (1).jpg', 'ohima (2).jpeg', 'ohima (2).jpg',
-        'ohima (3).jpg', 'ohima (4).jpg', 'ohima (5).jpg', 'ohima (6).jpg',
-        'ohima (7).jpg', 'ohima (8).jpg', 'ohima (9).jpg', 'ohima.png'
-    ];
-    const galleryCaptions = {
-        'ohima (1).jpeg': 'You look like a queen',
-        'ohima (1).jpg': 'See teeth',
-        'ohima (2).jpeg': 'Picture 3',
-        'ohima (2).jpg': 'Stupendous in my opinion',
-        'ohima (3).jpg': 'Hot kidd',
-        'ohima (4).jpg': 'lol',
-        'ohima (5).jpg': '2022 I guess',
-        'ohima (6).jpg': 'Corper weee',
-        'ohima (7).jpg': 'My love',
-        'ohima (8).jpg': 'I love you',
-        'ohima (9).jpg': 'Remember this one',
-        'ohima.png': 'Says it all'
-    };
 
-    function pickRandom(arr, n) {
-        const copy = arr.slice();
-        for (let i = copy.length - 1; i > 0; i--) {
+    // Full image list — matches the /images folder exactly.
+    // Edit captions freely. Order is randomized on every load.
+    const allGalleryImages = [
+        { file: 'ohima (1).jpeg', caption: 'You look like a queen 👑' },
+        { file: 'ohima (1).jpg',  caption: 'See teeth 😁' },
+        { file: 'ohima (1).png',  caption: 'You always glow' },
+        { file: 'ohima (2).jpg',  caption: 'Stupendous in my opinion' },
+        { file: 'ohima (3).jpg',  caption: 'Hot kidd 🔥' },
+        { file: 'ohima (4).jpg',  caption: 'lol 😄' },
+        { file: 'ohima (5).jpg',  caption: '2022 I guess' },
+        { file: 'ohima (6).jpg',  caption: 'Corper weee 🎖️' },
+        { file: 'ohima (7).jpg',  caption: 'My love 🤍' },
+        { file: 'ohima (8).jpg',  caption: 'I love you' },
+        { file: 'ohima (9).jpg',  caption: 'Remember this one?' },
+        { file: 'ohima (10).jpg', caption: 'Still my favourite' },
+        { file: 'ohima (11).jpg', caption: 'Pure sunshine ☀️' },
+        { file: 'ohima (12).jpg', caption: 'This smile 🥹' },
+        { file: 'ohima (13).jpg', caption: 'Always her' },
+        { file: 'ohima (14).jpg', caption: 'Mon cœur 🤍' },
+        { file: 'ohima (15).jpg', caption: 'Radiant as always' },
+        { file: 'ohima (16).jpg', caption: 'She doesn\'t miss 💅' },
+        { file: 'ohima (17).jpg', caption: 'Beautiful soul' },
+        { file: 'ohima (18).jpg', caption: 'Says it all ❤️' },
+    ];
+
+    function shuffle(arr) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [copy[i], copy[j]] = [copy[j], copy[i]];
+            [a[i], a[j]] = [a[j], a[i]];
         }
-        return copy.slice(0, n);
+        return a;
     }
 
-    const picked = pickRandom(galleryImages, 4);
-    const galleryItems = picked.map((file) => ({
-        caption: galleryCaptions[file] || file.replace(/\.[^.]+$/, '').replace(/\(|\)/g, ''),
-        src: `images/${file}`
-    }));
+    // ----- PHOTO STRIP (hub page) — 5 random images each load -----
+    const photoStrip = document.getElementById('photoStrip');
+    if (photoStrip) {
+        shuffle(allGalleryImages).slice(0, 5).forEach((item) => {
+            const img = document.createElement('img');
+            img.className = 'hub-photo';
+            img.src = `images/${item.file}`;
+            img.alt = 'us';
+            img.loading = 'lazy';
+            photoStrip.appendChild(img);
+        });
+    }
 
-    galleryItems.forEach((item) => {
+    // Randomize order on every page load — show all images
+    shuffle(allGalleryImages).forEach((item) => {
+        const src = `images/${item.file}`;
         const div = document.createElement('div');
         div.className = 'gallery-item';
         div.innerHTML = `
             <div class="photo-caption">${item.caption}</div>
-            <img src="${item.src}" alt="memory">
+            <img src="${src}" alt="memory" loading="lazy">
         `;
-        div.addEventListener('click', () => expandImage(item.src, item.caption));
+        div.addEventListener('click', () => expandImage(src, item.caption));
         galleryGrid.appendChild(div);
     });
 

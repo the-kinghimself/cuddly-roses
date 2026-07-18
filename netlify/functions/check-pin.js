@@ -1,43 +1,24 @@
-exports.handler = async (event) => {
-  // Handle CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    };
-  }
+// Netlify Function: verifies the PIN server-side.
+// Set env var LOCK_PIN in Netlify → Site configuration → Environment variables.
+// The actual PIN never ships to the browser.
 
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json',
+};
+
+exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers: CORS, body: '' };
+  if (event.httpMethod !== 'POST') return { statusCode: 405, headers: CORS, body: JSON.stringify({ ok: false }) };
 
   try {
-    const body = JSON.parse(event.body || '{}');
-    const enteredPin = body.pin;
-    const correctPin = process.env.PIN_CODE || '001234';
-
-    const isCorrect = enteredPin === correctPin;
-
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ok: isCorrect }),
-    };
-  } catch (err) {
-    return {
-      statusCode: 400,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ error: 'Invalid request' }),
-    };
+    const { pin } = JSON.parse(event.body || '{}');
+    const correctPin = process.env.LOCK_PIN;
+    if (!correctPin) return { statusCode: 500, headers: CORS, body: JSON.stringify({ ok: false, error: 'not configured' }) };
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: typeof pin === 'string' && pin === correctPin }) };
+  } catch {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ ok: false }) };
   }
 };
